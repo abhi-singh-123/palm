@@ -17,7 +17,10 @@ const exportBtn = document.getElementById("exportBtn");
 const exportMenu = document.getElementById("exportMenu");
 
 // Init
-document.addEventListener("DOMContentLoaded", loadLinks);
+document.addEventListener("DOMContentLoaded", () => {
+  loadLinks();
+  tagList.querySelector("[data-tag='all']").addEventListener("click", () => setTag("all"));
+});
 
 function loadLinks() {
   chrome.storage.local.get("palmLinks", ({ palmLinks }) => {
@@ -117,7 +120,7 @@ function render() {
   }
   emptyState.classList.add("hidden");
 
-  if (activeGroup === "tag") {
+  if (activeTag === "all") {
     renderGrouped(links, l => (l.tags?.[0] || "Untagged"));
   } else if (activeGroup === "date") {
     renderGrouped(links, l => dateGroup(l.savedAt));
