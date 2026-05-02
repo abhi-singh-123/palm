@@ -2,7 +2,7 @@
 
 > Save any link. AI summarizes it instantly. Everything stays private on your device.
 
-PALM is a Chrome extension that turns your scattered saved links into an organized, searchable, AI-powered personal library. No account required. No data leaves your browser except to the Gemini API for summarization.
+PALM is a Chrome extension that turns your scattered saved links into an organized, searchable, AI-powered personal library. **No account. No sign-up. No data ever leaves your device** — except to the Gemini API for summarization, using your own API key.
 
 ---
 
@@ -12,13 +12,15 @@ Most people save links in 5 different places — browser bookmarks, Slack messag
 
 **PALM vs other tools:**
 
-| Tool | AI Summary | Local Storage | Free | Organized Tags |
-|---|---|---|---|---|
-| **PALM** | ✅ | ✅ | ✅ | ✅ |
-| Pocket | ❌ | ❌ | Partial | Manual |
-| Instapaper | ❌ | ❌ | Partial | Manual |
-| Raindrop.io | ❌ | ❌ | Partial | Manual |
-| Browser Bookmarks | ❌ | ✅ | ✅ | ❌ |
+| Tool | AI Summary | Local Storage | Free | Auto Tags | Export | No Account |
+|---|---|---|---|---|---|---|
+| **PALM** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Pocket | ❌ | ❌ | Partial | Manual | Paid | ❌ |
+| Instapaper | ❌ | ❌ | Partial | Manual | Paid | ❌ |
+| Raindrop.io | ❌ | ❌ | Partial | Manual | Partial | ❌ |
+| Browser Bookmarks | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ |
+
+**No Account Required** is the key difference. Every alternative requires sign-up and stores your data on their servers. PALM works instantly — install, add your API key, start saving.
 
 ---
 
@@ -97,7 +99,7 @@ Appears in your popup and dashboard instantly
 
 ### Step 2 — Install PALM
 
-**Option A — Chrome Web Store** *(coming soon)*
+**Option A — Chrome Web Store** — [Install PALM](https://chrome.google.com/webstore/detail/palm)
 
 **Option B — Load manually (developer mode)**
 
