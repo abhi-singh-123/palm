@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PALM — Personal AI Link Manager</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">🌴 PALM</div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">FILTER BY TAG</div>
+      <div id="tagList">
+        <button class="tag-filter active" data-tag="all">All Links <span id="totalCount" class="count">0</span></button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">GROUP BY</div>
+      <div class="group-options">
+        <button class="group-btn active" data-group="none">None</button>
+        <button class="group-btn" data-group="tag">Tag</button>
+        <button class="group-btn" data-group="date">Date</button>
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <button id="exportBtn" class="btn-secondary">Export</button>
+      <div id="exportMenu" class="export-menu hidden">
+        <button data-format="json">Export as JSON</button>
+        <button data-format="csv">Export as CSV</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <input type="text" id="searchInput" placeholder="Search links, summaries, tags..." />
+      <div class="topbar-right">
+        <span id="resultCount" class="result-count"></span>
+      </div>
+    </div>
+
+    <!-- Links grid -->
+    <div id="linksGrid"></div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state hidden">
+      <div class="empty-icon">🌴</div>
+      <h2>No links saved yet</h2>
+      <p>Click the PALM extension icon in your toolbar to save your first link.</p>
+    </div>
+
+  </main>
+
+  <!-- Expanded card modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-card">
+      <button id="modalClose" class="modal-close">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

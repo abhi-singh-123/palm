@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PALM</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">🌴 PALM</div>
+    <div class="header-actions">
+      <button id="saveBtn" class="btn-primary">Save This Page</button>
+      <button id="dashboardBtn" class="btn-icon" title="Open Dashboard">📋</button>
+      <button id="settingsBtn" class="btn-icon" title="Settings">⚙️</button>
+    </div>
+  </div>
+
+  <!-- Settings Panel (hidden by default) -->
+  <div id="settingsPanel" class="panel hidden">
+    <h3>Settings</h3>
+    <label>Gemini API Key</label>
+    <input type="password" id="apiKeyInput" placeholder="AIza..." />
+    <button id="saveApiKey" class="btn-primary">Save Key</button>
+    <p class="hint">Get your free key at aistudio.google.com → Get API Key</p>
+    <div class="usage-box">
+      <div class="usage-row">
+        <span class="usage-label">Today's saves</span>
+        <span id="usageCount" class="usage-count">0 / 500</span>
+      </div>
+      <div class="usage-bar-track">
+        <div id="usageBar" class="usage-bar" style="width:0%"></div>
+      </div>
+      <p class="hint">Free tier: 500 saves/day · 20/min · Resets midnight PT</p>
+    </div>
+  </div>
+
+  <!-- Saving state -->
+  <div id="savingState" class="panel hidden">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Saving with AI summary...</p>
+    </div>
+  </div>
+
+  <!-- Main inbox -->
+  <div id="mainPanel">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search your links..." />
+    </div>
+
+    <div id="linksList"></div>
+
+    <div id="emptyState" class="empty-state hidden">
+      <p>No links saved yet.</p>
+      <p class="hint">Click "Save This Page" to get started.</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
