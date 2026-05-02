@@ -386,6 +386,97 @@ function deleteLink(id) {
   });
 }
 
+// ── Import ──
+const importBtn = document.getElementById("importBtn");
+const importFile = document.getElementById("importFile");
+
+importBtn.addEventListener("click", () => importFile.click());
+
+importFile.addEventListener("change", () => {
+  const file = importFile.files[0];
+  if (!file) return;
+  importFile.value = "";
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const rows = parseCSV(text);
+    if (rows.length === 0) { showToast("No rows found in file."); return; }
+
+    const headers = rows[0].map(h => h.toLowerCase().trim());
+    const urlIdx = headers.findIndex(h => ["url", "link", "href", "address"].includes(h));
+    const titleIdx = headers.findIndex(h => ["title", "name", "label"].includes(h));
+
+    const dataRows = urlIdx >= 0 ? rows.slice(1) : rows;
+    const resolvedUrlIdx = urlIdx >= 0 ? urlIdx : 0;
+
+    const existingUrls = new Set(allLinks.map(l => l.url));
+    const toAdd = [];
+
+    dataRows.forEach(row => {
+      const url = (row[resolvedUrlIdx] || "").trim();
+      if (!url.startsWith("http")) return;
+      if (existingUrls.has(url)) return;
+      existingUrls.add(url);
+
+      const title = titleIdx >= 0 ? (row[titleIdx] || "").trim() : getDomain(url);
+      toAdd.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+        title: title || getDomain(url),
+        url,
+        summary: "",
+        tags: [],
+        savedAt: new Date().toISOString()
+      });
+    });
+
+    if (toAdd.length === 0) { showToast("No new URLs to import."); return; }
+
+    const updated = [...toAdd, ...allLinks];
+    chrome.storage.local.set({ palmLinks: updated }, () => {
+      allLinks = updated;
+      buildTagSidebar();
+      render();
+      showToast(`Imported ${toAdd.length} link${toAdd.length > 1 ? "s" : ""}.`);
+    });
+  };
+  reader.readAsText(file);
+});
+
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const cols = [];
+    let cur = "", inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (ch === "," && !inQuotes) {
+        cols.push(cur); cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    cols.push(cur);
+    rows.push(cols);
+  }
+  return rows;
+}
+
+function showToast(msg) {
+  const existing = document.querySelector(".dash-toast");
+  if (existing) existing.remove();
+  const toast = document.createElement("div");
+  toast.className = "dash-toast";
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2600);
+}
+
 // ── Export ──
 exportBtn.addEventListener("click", () => exportMenu.classList.toggle("hidden"));
 
