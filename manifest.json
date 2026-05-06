@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PALM - Personal AI Link Manager",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "AI bookmark manager with summaries, auto-tags & search. Save from popup or right-click. No account, fully local, free.",
   "permissions": [
     "storage",
