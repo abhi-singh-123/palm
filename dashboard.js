@@ -2,6 +2,7 @@ let allLinks = [];
 let activeTag = "all";
 let activeGroup = "none";
 let searchQuery = "";
+const collapsedGroups = new Set();
 
 // Elements
 const searchInput = document.getElementById("searchInput");
@@ -138,11 +139,25 @@ function renderGrouped(links, keyFn) {
   });
 
   Object.entries(groups).forEach(([group, groupLinks]) => {
+    const isCollapsed = collapsedGroups.has(group);
+
     const header = document.createElement("div");
     header.className = "group-header";
-    header.textContent = `${group} (${groupLinks.length})`;
+    header.innerHTML = `
+      <span class="group-chevron">${isCollapsed ? "▶" : "▼"}</span>
+      ${escapeHtml(group)}
+      <span class="group-count">${groupLinks.length}</span>
+    `;
+    header.addEventListener("click", () => {
+      if (collapsedGroups.has(group)) collapsedGroups.delete(group);
+      else collapsedGroups.add(group);
+      render();
+    });
     linksGrid.appendChild(header);
-    groupLinks.forEach(l => linksGrid.appendChild(makeCard(l)));
+
+    if (!isCollapsed) {
+      groupLinks.forEach(l => linksGrid.appendChild(makeCard(l)));
+    }
   });
 }
 
@@ -165,13 +180,17 @@ function makeCard(link) {
   const domain = getDomain(link.url);
   const date = new Date(link.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
+  const hasSummary = link.summary && link.summary.trim().length > 0;
   card.innerHTML = `
     <div class="card-domain">
       <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=16" />
       ${escapeHtml(domain)}
     </div>
     <div class="card-title">${escapeHtml(cleanText(link.title))}</div>
-    <div class="card-summary">${escapeHtml(cleanText(link.summary || ""))}</div>
+    ${hasSummary
+      ? `<div class="card-summary">${escapeHtml(cleanText(link.summary))}</div>`
+      : `<div class="card-no-summary">No summary yet <button class="btn-generate" title="Generate AI summary">✦ Generate</button></div>`
+    }
     <div class="card-footer">
       <div class="card-tags">
         ${(link.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
@@ -185,6 +204,7 @@ function makeCard(link) {
 
   card.addEventListener("click", (e) => {
     if (e.target.classList.contains("card-delete")) return;
+    if (e.target.classList.contains("btn-generate")) return;
     openModal(link);
   });
 
@@ -192,6 +212,14 @@ function makeCard(link) {
     e.stopPropagation();
     deleteLink(link.id);
   });
+
+  const generateBtn = card.querySelector(".btn-generate");
+  if (generateBtn) {
+    generateBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      resimmarize(link, generateBtn);
+    });
+  }
 
   return card;
 }
@@ -387,6 +415,65 @@ function deleteLink(id) {
     buildTagSidebar();
     render();
   });
+}
+
+// ── Re-summarize ──
+async function resimmarize(link, btn) {
+  if (btn) { btn.textContent = "..."; btn.disabled = true; }
+
+  try {
+    const tab = await chrome.tabs.create({ url: link.url, active: false });
+
+    await new Promise(resolve => {
+      const listener = (tabId, info) => {
+        if (tabId === tab.id && info.status === "complete") {
+          chrome.tabs.onUpdated.removeListener(listener);
+          resolve();
+        }
+      };
+      chrome.tabs.onUpdated.addListener(listener);
+    });
+
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        const noiseSelectors = "nav, header, footer, aside, .sidebar, .navigation, .menu, .ad, .advertisement, .related, .comments, .cookie, [class*='sidebar'], [class*='related'], [class*='recommend'], [id*='sidebar']";
+        const clone = document.body.cloneNode(true);
+        clone.querySelectorAll(noiseSelectors).forEach(el => el.remove());
+        const article = clone.querySelector("article, [role='main'], main, .post-content, .article-body, .entry-content, .content-body, [class*='article'], [class*='post-body']");
+        return {
+          title: document.title || "",
+          url: window.location.href,
+          content: (article ? article.innerText : clone.innerText || "").slice(0, 8000)
+        };
+      }
+    });
+
+    await chrome.tabs.remove(tab.id);
+
+    const pageData = results?.[0]?.result;
+    if (!pageData) throw new Error("Could not read page");
+
+    const response = await new Promise(resolve =>
+      chrome.runtime.sendMessage({ action: "summarize", data: { ...pageData, selectedText: "" } }, resolve)
+    );
+
+    if (response?.error) throw new Error(response.error);
+
+    link.summary = response.summary;
+    link.tags = response.tags?.length ? response.tags : link.tags;
+
+    const idx = allLinks.findIndex(l => l.id === link.id);
+    if (idx !== -1) allLinks[idx] = link;
+    chrome.storage.local.set({ palmLinks: allLinks }, () => {
+      buildTagSidebar();
+      render();
+      showToast("Summary generated!");
+    });
+  } catch (err) {
+    if (btn) { btn.textContent = "✦ Generate"; btn.disabled = false; }
+    showToast("Error: " + err.message);
+  }
 }
 
 // ── Import ──

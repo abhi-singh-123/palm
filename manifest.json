@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "PALM - Personal AI Link Manager",
   "version": "1.0.0",
-  "description": "Save any link, AI summarizes it instantly. Your links, organized.",
+  "description": "AI bookmark manager with summaries, auto-tags & search. Save from popup or right-click. No account, fully local, free.",
   "permissions": [
     "storage",
     "activeTab",
