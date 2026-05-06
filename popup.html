@@ -10,20 +10,26 @@
 
   <!-- Header -->
   <div class="header">
-    <div class="logo">🌴 PALM</div>
+    <div class="logo-wrap">
+      <div class="logo-icon">🌴</div>
+      <div>
+        <div class="logo-text">PALM</div>
+        <div class="logo-sub" id="headerCount">0 LINKS SAVED</div>
+      </div>
+    </div>
     <div class="header-actions">
-      <button id="saveBtn" class="btn-primary">Save This Page</button>
+      <button id="saveBtn" class="btn-primary">+ Save Page</button>
       <button id="dashboardBtn" class="btn-icon" title="Open Dashboard">📋</button>
       <button id="settingsBtn" class="btn-icon" title="Settings">⚙️</button>
     </div>
   </div>
 
-  <!-- Settings Panel (hidden by default) -->
+  <!-- Settings Panel -->
   <div id="settingsPanel" class="panel hidden">
     <h3>Settings</h3>
     <label>Gemini API Key</label>
     <input type="password" id="apiKeyInput" placeholder="AIza..." />
-    <button id="saveApiKey" class="btn-primary">Save Key</button>
+    <button id="saveApiKey" class="btn-save-key">Save Key</button>
     <p class="hint">Get your free key at aistudio.google.com → Get API Key</p>
     <div class="usage-box">
       <div class="usage-row">
@@ -33,21 +39,20 @@
       <div class="usage-bar-track">
         <div id="usageBar" class="usage-bar" style="width:0%"></div>
       </div>
-      <p class="hint">Free tier: 500 saves/day · 20/min · Resets midnight PT</p>
+      <p class="hint">Free tier: 500 saves/day · Resets midnight PT</p>
     </div>
   </div>
 
   <!-- Saving state -->
-  <div id="savingState" class="panel hidden">
-    <div class="loading">
-      <div class="spinner"></div>
-      <p>Saving with AI summary...</p>
-    </div>
+  <div id="savingState" class="saving-state hidden">
+    <div class="spinner"></div>
+    <p>Generating AI summary...</p>
   </div>
 
-  <!-- Main inbox -->
+  <!-- Main panel -->
   <div id="mainPanel">
     <div class="search-bar">
+      <span class="search-icon">🔍</span>
       <input type="text" id="searchInput" placeholder="Search your links..." />
     </div>
 
@@ -55,7 +60,12 @@
 
     <div id="emptyState" class="empty-state hidden">
       <p>No links saved yet.</p>
-      <p class="hint">Click "Save This Page" to get started.</p>
+      <p class="hint">Click "+ Save Page" to get started.</p>
+    </div>
+
+    <div class="popup-footer">
+      <span class="footer-count" id="footerCount"></span>
+      <button class="footer-dash-btn" id="footerDashBtn">Open dashboard →</button>
     </div>
   </div>
 

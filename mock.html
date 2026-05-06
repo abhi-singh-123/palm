@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>PALM — Design Mock</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+    background: #0f0f0f;
+    display: flex;
+    gap: 60px;
+    padding: 60px;
+    min-height: 100vh;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .label {
+    text-align: center;
+    color: #555;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  /* ═══════════════════════════════
+     POPUP MOCK
+  ═══════════════════════════════ */
+  .popup {
+    width: 380px;
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+  }
+
+  .popup-header {
+    background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .popup-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .popup-logo-icon {
+    width: 28px;
+    height: 28px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .popup-logo-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  .popup-logo-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.5px;
+  }
+
+  .popup-header-right {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .popup-save-btn {
+    background: #fff;
+    color: #1b4332;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+  }
+
+  .popup-icon-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .popup-search {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafafa;
+  }
+
+  .popup-search input {
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 8px 12px 8px 34px;
+    font-size: 13px;
+    color: #333;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    outline: none;
+  }
+
+  .popup-links {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .popup-card {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background 0.1s;
+    display: flex;
+    gap: 10px;
+  }
+
+  .popup-card:hover { background: #f9fdf9; }
+
+  .popup-card-favicon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .popup-card-body { flex: 1; min-width: 0; }
+
+  .popup-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+
+  .popup-card-summary {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .popup-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .popup-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #e8f5e9;
+    color: #2d6a4f;
+  }
+
+  .popup-tag.blue { background: #e3f2fd; color: #1565c0; }
+  .popup-tag.purple { background: #f3e5f5; color: #7b1fa2; }
+  .popup-tag.orange { background: #fff3e0; color: #e65100; }
+
+  .popup-card-date { font-size: 10px; color: #ccc; }
+
+  .popup-footer {
+    padding: 10px 16px;
+    background: #fafafa;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .popup-footer-count {
+    font-size: 11px;
+    color: #bbb;
+  }
+
+  .popup-footer-btn {
+    font-size: 11px;
+    color: #2d6a4f;
+    font-weight: 600;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* ═══════════════════════════════
+     DASHBOARD MOCK
+  ═══════════════════════════════ */
+  .dashboard {
+    width: 900px;
+    height: 620px;
+    background: #f7f8fa;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    display: flex;
+  }
+
+  .dash-sidebar {
+    width: 200px;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    flex-shrink: 0;
+  }
+
+  .dash-sidebar-logo {
+    padding: 0 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 16px;
+  }
+
+  .dash-logo-icon {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #2d6a4f, #52b788);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .dash-logo-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .dash-sidebar-label {
+    font-size: 10px;
+    color: #444;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 0 18px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .dash-tag-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 18px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    border-radius: 0;
+    transition: all 0.1s;
+  }
+
+  .dash-tag-btn:hover { color: #ccc; background: rgba(255,255,255,0.04); }
+
+  .dash-tag-btn.active {
+    color: #fff;
+    background: rgba(45,106,79,0.3);
+    border-left: 2px solid #52b788;
+  }
+
+  .dash-tag-count {
+    font-size: 11px;
+    color: #444;
+    background: rgba(255,255,255,0.06);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  .dash-tag-btn.active .dash-tag-count { color: #52b788; background: rgba(82,183,136,0.15); }
+
+  .dash-sidebar-bottom {
+    margin-top: auto;
+    padding: 16px 18px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .dash-bottom-btn {
+    background: rgba(255,255,255,0.06);
+    border: none;
+    color: #888;
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+  }
+
+  .dash-bottom-btn:hover { color: #ccc; background: rgba(255,255,255,0.1); }
+
+  .dash-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .dash-topbar {
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dash-search {
+    flex: 1;
+    background: #f5f5f5;
+    border: 1.5px solid #eee;
+    border-radius: 10px;
+    padding: 8px 14px 8px 36px;
+    font-size: 13px;
+    outline: none;
+    color: #333;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+  }
+
+  .dash-topbar-count {
+    font-size: 12px;
+    color: #bbb;
+    white-space: nowrap;
+  }
+
+  .dash-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .dash-group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    margin-top: 4px;
+  }
+
+  .dash-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #aaa;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .dash-group-line {
+    flex: 1;
+    height: 1px;
+    background: #eee;
+  }
+
+  .dash-group-num {
+    font-size: 11px;
+    color: #ccc;
+  }
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .dash-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dash-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #2d6a4f, #52b788);
+  }
+
+  .dash-card.blue::before { background: linear-gradient(90deg, #1565c0, #42a5f5); }
+  .dash-card.purple::before { background: linear-gradient(90deg, #7b1fa2, #ce93d8); }
+  .dash-card.orange::before { background: linear-gradient(90deg, #e65100, #ffb74d); }
+
+  .dash-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+
+  .dash-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dash-card-domain {
+    font-size: 10px;
+    color: #bbb;
+    flex: 1;
+  }
+
+  .dash-card-favicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: #eee;
+  }
+
+  .dash-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .dash-card-summary {
+    font-size: 11px;
+    color: #777;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .dash-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+  }
+
+  .dash-card-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #e8f5e9;
+    color: #2d6a4f;
+  }
+
+  .dash-card-tag.blue { background: #e3f2fd; color: #1565c0; }
+  .dash-card-tag.purple { background: #f3e5f5; color: #7b1fa2; }
+  .dash-card-tag.orange { background: #fff3e0; color: #e65100; }
+
+  .dash-card-date { font-size: 10px; color: #ddd; }
+</style>
+</head>
+<body>
+
+<!-- POPUP -->
+<div>
+  <p class="label">Popup</p>
+  <div class="popup">
+    <div class="popup-header">
+      <div class="popup-logo">
+        <div class="popup-logo-icon">🌴</div>
+        <div>
+          <div class="popup-logo-text">PALM</div>
+          <div class="popup-logo-sub">12 LINKS SAVED</div>
+        </div>
+      </div>
+      <div class="popup-header-right">
+        <button class="popup-save-btn">+ Save Page</button>
+        <button class="popup-icon-btn">📋</button>
+        <button class="popup-icon-btn">⚙️</button>
+      </div>
+    </div>
+
+    <div class="popup-search">
+      <input placeholder="Search your links..." />
+    </div>
+
+    <div class="popup-links">
+
+      <div class="popup-card">
+        <div class="popup-card-favicon">🤖</div>
+        <div class="popup-card-body">
+          <div class="popup-card-title">RAG vs Fine-Tuning: Which Should You Use?</div>
+          <div class="popup-card-summary">Retrieval-augmented generation is better suited for dynamic knowledge bases while fine-tuning excels at teaching specific styles and behaviors to language models.</div>
+          <div class="popup-card-footer">
+            <span class="popup-tag">AI</span>
+            <span class="popup-card-date">May 6</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="popup-card">
+        <div class="popup-card-favicon">💻</div>
+        <div class="popup-card-body">
+          <div class="popup-card-title">Building Scalable APIs with Node.js</div>
+          <div class="popup-card-summary">Covers rate limiting, connection pooling, and horizontal scaling strategies for high-traffic REST APIs using Node.js and Redis.</div>
+          <div class="popup-card-footer">
+            <span class="popup-tag blue">Programming</span>
+            <span class="popup-card-date">May 5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="popup-card">
+        <div class="popup-card-favicon">📈</div>
+        <div class="popup-card-body">
+          <div class="popup-card-title">The Deep Work Method for Engineers</div>
+          <div class="popup-card-summary">Cal Newport's framework applied to software engineering — blocking distraction, batching shallow tasks, and protecting flow state for complex problem solving.</div>
+          <div class="popup-card-footer">
+            <span class="popup-tag purple">Productivity</span>
+            <span class="popup-card-date">May 4</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="popup-card">
+        <div class="popup-card-favicon">🔐</div>
+        <div class="popup-card-body">
+          <div class="popup-card-title">OWASP Top 10 for 2025</div>
+          <div class="popup-card-summary">Updated list of the most critical web application security risks including prompt injection as a new entry for AI-integrated applications.</div>
+          <div class="popup-card-footer">
+            <span class="popup-tag orange">Security</span>
+            <span class="popup-card-date">May 3</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="popup-footer">
+      <span class="popup-footer-count">Showing 4 of 12 links</span>
+      <button class="popup-footer-btn">View all →</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div>
+  <p class="label">Dashboard</p>
+  <div class="dashboard">
+
+    <div class="dash-sidebar">
+      <div class="dash-sidebar-logo">
+        <div class="dash-logo-icon">🌴</div>
+        <div class="dash-logo-text">PALM</div>
+      </div>
+
+      <div class="dash-sidebar-label">Filter</div>
+      <button class="dash-tag-btn active">All Links <span class="dash-tag-count">12</span></button>
+      <button class="dash-tag-btn">AI <span class="dash-tag-count">4</span></button>
+      <button class="dash-tag-btn">Programming <span class="dash-tag-count">3</span></button>
+      <button class="dash-tag-btn">Productivity <span class="dash-tag-count">2</span></button>
+      <button class="dash-tag-btn">Security <span class="dash-tag-count">2</span></button>
+      <button class="dash-tag-btn">Learning <span class="dash-tag-count">1</span></button>
+
+      <div class="dash-sidebar-bottom">
+        <button class="dash-bottom-btn">⬇ Export</button>
+        <button class="dash-bottom-btn">⬆ Import</button>
+      </div>
+    </div>
+
+    <div class="dash-main">
+      <div class="dash-topbar">
+        <input class="dash-search" placeholder="Search links, summaries, tags..." />
+        <span class="dash-topbar-count">12 links</span>
+      </div>
+
+      <div class="dash-content">
+
+        <div class="dash-group-header">
+          <span class="dash-group-title">▼ AI</span>
+          <div class="dash-group-line"></div>
+          <span class="dash-group-num">4</span>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-card">
+            <div class="dash-card-meta">
+              <div class="dash-card-favicon"></div>
+              <span class="dash-card-domain">towardsdatascience.com</span>
+            </div>
+            <div class="dash-card-title">RAG vs Fine-Tuning: Which Should You Use?</div>
+            <div class="dash-card-summary">RAG is better for dynamic knowledge while fine-tuning teaches specific styles to LLMs. The choice depends on update frequency and task specificity.</div>
+            <div class="dash-card-footer">
+              <span class="dash-card-tag">AI</span>
+              <span class="dash-card-date">May 6</span>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-meta">
+              <div class="dash-card-favicon"></div>
+              <span class="dash-card-domain">openai.com</span>
+            </div>
+            <div class="dash-card-title">GPT-4o System Card: Safety Evaluations</div>
+            <div class="dash-card-summary">Comprehensive safety testing results for GPT-4o covering jailbreaks, CBRN risks, and multimodal attack vectors with mitigation strategies.</div>
+            <div class="dash-card-footer">
+              <span class="dash-card-tag">AI</span>
+              <span class="dash-card-date">May 5</span>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-meta">
+              <div class="dash-card-favicon"></div>
+              <span class="dash-card-domain">arxiv.org</span>
+            </div>
+            <div class="dash-card-title">Attention Is All You Need — Revisited</div>
+            <div class="dash-card-summary">Seven years after the original transformer paper, researchers analyze which architectural choices mattered most and which were incidental to success.</div>
+            <div class="dash-card-footer">
+              <span class="dash-card-tag">AI</span>
+              <span class="dash-card-date">May 4</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-group-header">
+          <span class="dash-group-title">▼ Programming</span>
+          <div class="dash-group-line"></div>
+          <span class="dash-group-num">3</span>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-card blue">
+            <div class="dash-card-meta">
+              <div class="dash-card-favicon"></div>
+              <span class="dash-card-domain">nodejs.org</span>
+            </div>
+            <div class="dash-card-title">Building Scalable APIs with Node.js</div>
+            <div class="dash-card-summary">Rate limiting, connection pooling, and horizontal scaling strategies for high-traffic REST APIs using Node.js and Redis.</div>
+            <div class="dash-card-footer">
+              <span class="dash-card-tag blue">Programming</span>
+              <span class="dash-card-date">May 5</span>
+            </div>
+          </div>
+          <div class="dash-card blue">
+            <div class="dash-card-meta">
+              <div class="dash-card-favicon"></div>
+              <span class="dash-card-domain">javascript.info</span>
+            </div>
+            <div class="dash-card-title">JavaScript Event Loop: Deep Dive</div>
+            <div class="dash-card-summary">How the call stack, microtask queue, and macrotask queue interact in V8, with visual diagrams showing execution order for async operations.</div>
+            <div class="dash-card-footer">
+              <span class="dash-card-tag blue">Programming</span>
+              <span class="dash-card-date">May 3</span>
+            </div>
+          </div>
+          <div class="dash-card purple">
+            <div class="dash-card-meta">
+              <div class="dash-card-favicon"></div>
+              <span class="dash-card-domain">martinfowler.com</span>
+            </div>
+            <div class="dash-card-title">The Deep Work Method for Engineers</div>
+            <div class="dash-card-summary">Cal Newport's framework applied to software — blocking distraction, batching shallow tasks, and protecting flow state.</div>
+            <div class="dash-card-footer">
+              <span class="dash-card-tag purple">Productivity</span>
+              <span class="dash-card-date">May 4</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

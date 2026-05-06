@@ -2,20 +2,37 @@ let allLinks = [];
 let activeTag = "all";
 let activeGroup = "none";
 let searchQuery = "";
+let visibleCount = 30;
+const PAGE_SIZE = 30;
 const collapsedGroups = new Set();
 
+// Tag → color class mapping
+const TAG_COLOR = {
+  "AI": "tag-blue", "Technology": "tag-blue", "Programming": "tag-blue", "Data": "tag-blue", "Web": "tag-blue",
+  "Productivity": "tag-purple", "Tools": "tag-purple", "Learning": "tag-purple",
+  "Business": "tag-orange", "Finance": "tag-orange", "Marketing": "tag-orange", "Leadership": "tag-orange", "Career": "tag-orange",
+  "Health": "tag-teal", "Science": "tag-teal", "Research": "tag-teal",
+  "Security": "tag-red",
+  "Design": "tag-pink",
+  "News": "", "Other": ""
+};
+
+function tagColor(tag) {
+  return TAG_COLOR[tag] || "";
+}
+
 // Elements
-const searchInput = document.getElementById("searchInput");
-const linksGrid = document.getElementById("linksGrid");
-const emptyState = document.getElementById("emptyState");
-const tagList = document.getElementById("tagList");
-const totalCount = document.getElementById("totalCount");
-const resultCount = document.getElementById("resultCount");
-const modal = document.getElementById("modal");
+const searchInput  = document.getElementById("searchInput");
+const linksGrid    = document.getElementById("linksGrid");
+const emptyState   = document.getElementById("emptyState");
+const tagList      = document.getElementById("tagList");
+const totalCount   = document.getElementById("totalCount");
+const resultCount  = document.getElementById("resultCount");
+const modal        = document.getElementById("modal");
 const modalContent = document.getElementById("modalContent");
-const modalClose = document.getElementById("modalClose");
-const exportBtn = document.getElementById("exportBtn");
-const exportMenu = document.getElementById("exportMenu");
+const modalClose   = document.getElementById("modalClose");
+const exportBtn    = document.getElementById("exportBtn");
+const exportMenu   = document.getElementById("exportMenu");
 
 // Init
 document.addEventListener("DOMContentLoaded", () => {
@@ -31,7 +48,7 @@ function loadLinks() {
   });
 }
 
-// Listen for new saves while dashboard is open
+// Live update while dashboard is open
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.palmLinks) {
     allLinks = changes.palmLinks.newValue || [];
@@ -40,7 +57,7 @@ chrome.storage.onChanged.addListener((changes) => {
   }
 });
 
-// ── Sidebar tag list ──
+// ── Sidebar ──
 function buildTagSidebar() {
   const tagCounts = {};
   allLinks.forEach(l => (l.tags || []).forEach(t => {
@@ -48,8 +65,6 @@ function buildTagSidebar() {
   }));
 
   totalCount.textContent = allLinks.length;
-
-  // Remove old dynamic tags
   tagList.querySelectorAll(".tag-filter:not([data-tag='all'])").forEach(el => el.remove());
 
   Object.entries(tagCounts)
@@ -63,12 +78,12 @@ function buildTagSidebar() {
       tagList.appendChild(btn);
     });
 
-  // Update "All" active state
   tagList.querySelector("[data-tag='all']").classList.toggle("active", activeTag === "all");
 }
 
 function setTag(tag) {
   activeTag = tag;
+  visibleCount = PAGE_SIZE;
   tagList.querySelectorAll(".tag-filter").forEach(b => {
     b.classList.toggle("active", b.dataset.tag === tag);
   });
@@ -79,6 +94,7 @@ function setTag(tag) {
 document.querySelectorAll(".group-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     activeGroup = btn.dataset.group;
+    visibleCount = PAGE_SIZE;
     document.querySelectorAll(".group-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     render();
@@ -88,6 +104,7 @@ document.querySelectorAll(".group-btn").forEach(btn => {
 // ── Search ──
 searchInput.addEventListener("input", () => {
   searchQuery = searchInput.value.trim().toLowerCase();
+  visibleCount = PAGE_SIZE;
   render();
 });
 
@@ -95,12 +112,10 @@ searchInput.addEventListener("input", () => {
 function render() {
   let links = allLinks;
 
-  // Filter by tag
   if (activeTag !== "all") {
     links = links.filter(l => (l.tags || []).includes(activeTag));
   }
 
-  // Filter by search
   if (searchQuery) {
     links = links.filter(l =>
       l.title?.toLowerCase().includes(searchQuery) ||
@@ -126,7 +141,12 @@ function render() {
   } else if (activeGroup === "date") {
     renderGrouped(links, l => dateGroup(l.savedAt));
   } else {
-    links.forEach(l => linksGrid.appendChild(makeCard(l)));
+    // Flat view with pagination
+    const visible = links.slice(0, visibleCount);
+    visible.forEach(l => linksGrid.appendChild(makeCard(l)));
+    if (links.length > visibleCount) {
+      addLoadMoreBtn(links.length - visibleCount);
+    }
   }
 }
 
@@ -145,7 +165,8 @@ function renderGrouped(links, keyFn) {
     header.className = "group-header";
     header.innerHTML = `
       <span class="group-chevron">${isCollapsed ? "▶" : "▼"}</span>
-      ${escapeHtml(group)}
+      <span class="group-header-title">${escapeHtml(group)}</span>
+      <div class="group-header-line"></div>
       <span class="group-count">${groupLinks.length}</span>
     `;
     header.addEventListener("click", () => {
@@ -156,15 +177,44 @@ function renderGrouped(links, keyFn) {
     linksGrid.appendChild(header);
 
     if (!isCollapsed) {
-      groupLinks.forEach(l => linksGrid.appendChild(makeCard(l)));
+      const key = `group_${group}`;
+      const groupVisible = collapsedGroups.has(key + "_count")
+        ? parseInt(collapsedGroups.get(key + "_count"))
+        : PAGE_SIZE;
+
+      const visibleLinks = groupLinks.slice(0, groupVisible);
+      visibleLinks.forEach(l => linksGrid.appendChild(makeCard(l)));
+
+      if (groupLinks.length > groupVisible) {
+        addLoadMoreBtn(groupLinks.length - groupVisible, () => {
+          collapsedGroups.set(key + "_count", groupVisible + PAGE_SIZE);
+          render();
+        });
+      }
     }
   });
 }
 
+function addLoadMoreBtn(remaining, onClick) {
+  const wrap = document.createElement("div");
+  wrap.className = "load-more-wrap";
+  const btn = document.createElement("button");
+  btn.className = "btn-load-more";
+  btn.textContent = `Load ${Math.min(remaining, PAGE_SIZE)} more`;
+  btn.addEventListener("click", () => {
+    if (onClick) {
+      onClick();
+    } else {
+      visibleCount += PAGE_SIZE;
+      render();
+    }
+  });
+  wrap.appendChild(btn);
+  linksGrid.appendChild(wrap);
+}
+
 function dateGroup(iso) {
-  const now = new Date();
-  const date = new Date(iso);
-  const diffDays = Math.floor((now - date) / 86400000);
+  const diffDays = Math.floor((Date.now() - new Date(iso)) / 86400000);
   if (diffDays === 0) return "Today";
   if (diffDays === 1) return "Yesterday";
   if (diffDays <= 7) return "This Week";
@@ -175,12 +225,13 @@ function dateGroup(iso) {
 // ── Card ──
 function makeCard(link) {
   const card = document.createElement("div");
-  card.className = "link-card";
+  const color = tagColor(link.tags?.[0] || "");
+  card.className = "link-card" + (color ? " " + color : "");
 
   const domain = getDomain(link.url);
   const date = new Date(link.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
   const hasSummary = link.summary && link.summary.trim().length > 0;
+
   card.innerHTML = `
     <div class="card-domain">
       <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=${domain}&sz=16" />
@@ -189,11 +240,11 @@ function makeCard(link) {
     <div class="card-title">${escapeHtml(cleanText(link.title))}</div>
     ${hasSummary
       ? `<div class="card-summary">${escapeHtml(cleanText(link.summary))}</div>`
-      : `<div class="card-no-summary">No summary yet <button class="btn-generate" title="Generate AI summary">✦ Generate</button></div>`
+      : `<div class="card-no-summary">No summary <button class="btn-generate">✦ Generate</button></div>`
     }
     <div class="card-footer">
       <div class="card-tags">
-        ${(link.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
+        ${(link.tags || []).map(t => `<span class="tag ${tagColor(t)}">${escapeHtml(t)}</span>`).join("")}
       </div>
       <div class="card-actions">
         <span class="card-date">${date}</span>
@@ -250,7 +301,7 @@ function openModal(link) {
         Summary
         <button class="btn-edit-summary" id="editSummaryBtn">Edit</button>
       </div>
-      <div class="modal-summary" id="modalSummaryText">${escapeHtml(cleanText(link.summary || ""))}</div>
+      <div class="modal-summary" id="modalSummaryText">${escapeHtml(cleanText(link.summary || "No summary yet."))}</div>
       <textarea class="modal-summary-editor hidden" id="modalSummaryEditor">${escapeHtml(cleanText(link.summary || ""))}</textarea>
       <div class="summary-edit-actions hidden" id="summaryEditActions">
         <button class="btn-save-summary" id="saveSummaryBtn">Save</button>
@@ -260,7 +311,7 @@ function openModal(link) {
     <div class="modal-tag-label">Tags</div>
     <div class="modal-tags" id="modalTags">
       ${(link.tags || []).map(t => `
-        <span class="tag tag-editable">
+        <span class="tag ${tagColor(t)} tag-editable">
           ${escapeHtml(t)}
           <button class="tag-remove" data-tag="${escapeHtml(t)}">×</button>
         </span>`).join("")}
@@ -274,12 +325,7 @@ function openModal(link) {
     </div>
   `;
 
-  // Open link
-  document.getElementById("modalOpen").addEventListener("click", () => {
-    chrome.tabs.create({ url: link.url });
-  });
-
-  // Delete link
+  document.getElementById("modalOpen").addEventListener("click", () => chrome.tabs.create({ url: link.url }));
   document.getElementById("modalDelete").addEventListener("click", () => {
     deleteLink(link.id);
     modal.classList.add("hidden");
@@ -296,8 +342,7 @@ function openModal(link) {
     titleEditor.classList.remove("hidden");
     titleEditActions.classList.remove("hidden");
     editTitleBtn.classList.add("hidden");
-    titleEditor.focus();
-    titleEditor.select();
+    titleEditor.focus(); titleEditor.select();
   });
 
   document.getElementById("cancelTitleBtn").addEventListener("click", () => {
@@ -317,13 +362,11 @@ function openModal(link) {
     titleEditor.classList.add("hidden");
     titleEditActions.classList.add("hidden");
     editTitleBtn.classList.remove("hidden");
-
     const idx = allLinks.findIndex(l => l.id === link.id);
     if (idx !== -1) allLinks[idx] = link;
     chrome.storage.local.set({ palmLinks: allLinks }, () => render());
   });
 
-  // Save title on Enter key
   titleEditor.addEventListener("keydown", (e) => {
     if (e.key === "Enter") document.getElementById("saveTitleBtn").click();
     if (e.key === "Escape") document.getElementById("cancelTitleBtn").click();
@@ -359,27 +402,23 @@ function openModal(link) {
     summaryEditor.classList.add("hidden");
     summaryEditActions.classList.add("hidden");
     editBtn.classList.remove("hidden");
-
     const idx = allLinks.findIndex(l => l.id === link.id);
     if (idx !== -1) allLinks[idx] = link;
     chrome.storage.local.set({ palmLinks: allLinks }, () => render());
   });
 
-  // Remove tag
   document.querySelectorAll(".tag-remove").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const tagToRemove = btn.dataset.tag;
-      updateLinkTags(link, link.tags.filter(t => t !== tagToRemove));
+      updateLinkTags(link, link.tags.filter(t => t !== btn.dataset.tag));
     });
   });
 
-  // Add tag on Enter
   const tagInput = document.getElementById("tagInput");
   tagInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      const newTag = tagInput.value.trim().toLowerCase();
-      if (newTag && !(link.tags || []).includes(newTag)) {
+      const newTag = tagInput.value.trim();
+      if (newTag && !(link.tags || []).map(t => t.toLowerCase()).includes(newTag.toLowerCase())) {
         updateLinkTags(link, [...(link.tags || []), newTag]);
       } else {
         tagInput.value = "";
@@ -392,9 +431,7 @@ function openModal(link) {
 
 modalClose.addEventListener("click", () => modal.classList.add("hidden"));
 document.querySelector(".modal-overlay").addEventListener("click", () => modal.classList.add("hidden"));
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") modal.classList.add("hidden");
-});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.classList.add("hidden"); });
 
 // ── Tag editing ──
 function updateLinkTags(link, newTags) {
@@ -404,7 +441,7 @@ function updateLinkTags(link, newTags) {
   chrome.storage.local.set({ palmLinks: allLinks }, () => {
     buildTagSidebar();
     render();
-    openModal(link); // re-render modal with updated tags
+    openModal(link);
   });
 }
 
@@ -420,10 +457,8 @@ function deleteLink(id) {
 // ── Re-summarize ──
 async function resimmarize(link, btn) {
   if (btn) { btn.textContent = "..."; btn.disabled = true; }
-
   try {
     const tab = await chrome.tabs.create({ url: link.url, active: false });
-
     await new Promise(resolve => {
       const listener = (tabId, info) => {
         if (tabId === tab.id && info.status === "complete") {
@@ -450,25 +485,20 @@ async function resimmarize(link, btn) {
     });
 
     await chrome.tabs.remove(tab.id);
-
     const pageData = results?.[0]?.result;
     if (!pageData) throw new Error("Could not read page");
 
     const response = await new Promise(resolve =>
       chrome.runtime.sendMessage({ action: "summarize", data: { ...pageData, selectedText: "" } }, resolve)
     );
-
     if (response?.error) throw new Error(response.error);
 
     link.summary = response.summary;
     link.tags = response.tags?.length ? response.tags : link.tags;
-
     const idx = allLinks.findIndex(l => l.id === link.id);
     if (idx !== -1) allLinks[idx] = link;
     chrome.storage.local.set({ palmLinks: allLinks }, () => {
-      buildTagSidebar();
-      render();
-      showToast("Summary generated!");
+      buildTagSidebar(); render(); showToast("Summary generated!");
     });
   } catch (err) {
     if (btn) { btn.textContent = "✦ Generate"; btn.disabled = false; }
@@ -477,7 +507,7 @@ async function resimmarize(link, btn) {
 }
 
 // ── Import ──
-const importBtn = document.getElementById("importBtn");
+const importBtn  = document.getElementById("importBtn");
 const importFile = document.getElementById("importFile");
 
 importBtn.addEventListener("click", () => importFile.click());
@@ -489,33 +519,27 @@ importFile.addEventListener("change", () => {
 
   const reader = new FileReader();
   reader.onload = (e) => {
-    const text = e.target.result;
-    const rows = parseCSV(text);
+    const rows = parseCSV(e.target.result);
     if (rows.length === 0) { showToast("No rows found in file."); return; }
 
     const headers = rows[0].map(h => h.toLowerCase().trim());
-    const urlIdx = headers.findIndex(h => ["url", "link", "href", "address"].includes(h));
-    const titleIdx = headers.findIndex(h => ["title", "name", "label"].includes(h));
-
+    const urlIdx   = headers.findIndex(h => ["url","link","href","address"].includes(h));
+    const titleIdx = headers.findIndex(h => ["title","name","label"].includes(h));
     const dataRows = urlIdx >= 0 ? rows.slice(1) : rows;
-    const resolvedUrlIdx = urlIdx >= 0 ? urlIdx : 0;
+    const rUrlIdx  = urlIdx >= 0 ? urlIdx : 0;
 
     const existingUrls = new Set(allLinks.map(l => l.url));
     const toAdd = [];
 
     dataRows.forEach(row => {
-      const url = (row[resolvedUrlIdx] || "").trim();
-      if (!url.startsWith("http")) return;
-      if (existingUrls.has(url)) return;
+      const url = (row[rUrlIdx] || "").trim();
+      if (!url.startsWith("http") || existingUrls.has(url)) return;
       existingUrls.add(url);
-
       const title = titleIdx >= 0 ? (row[titleIdx] || "").trim() : getDomain(url);
       toAdd.push({
         id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-        title: title || getDomain(url),
-        url,
-        summary: "",
-        tags: [],
+        title: title || getDomain(url), url,
+        summary: "", tags: [],
         savedAt: new Date().toISOString()
       });
     });
@@ -525,8 +549,7 @@ importFile.addEventListener("change", () => {
     const updated = [...toAdd, ...allLinks];
     chrome.storage.local.set({ palmLinks: updated }, () => {
       allLinks = updated;
-      buildTagSidebar();
-      render();
+      buildTagSidebar(); render();
       showToast(`Imported ${toAdd.length} link${toAdd.length > 1 ? "s" : ""}.`);
     });
   };
@@ -535,24 +558,16 @@ importFile.addEventListener("change", () => {
 
 function parseCSV(text) {
   const rows = [];
-  const lines = text.split(/\r?\n/);
-  for (const line of lines) {
+  for (const line of text.split(/\r?\n/)) {
     if (!line.trim()) continue;
-    const cols = [];
-    let cur = "", inQuotes = false;
+    const cols = []; let cur = "", inQ = false;
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
-      if (ch === '"') {
-        if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
-        else inQuotes = !inQuotes;
-      } else if (ch === "," && !inQuotes) {
-        cols.push(cur); cur = "";
-      } else {
-        cur += ch;
-      }
+      if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+      else if (ch === "," && !inQ) { cols.push(cur); cur = ""; }
+      else cur += ch;
     }
-    cols.push(cur);
-    rows.push(cols);
+    cols.push(cur); rows.push(cols);
   }
   return rows;
 }
@@ -572,67 +587,52 @@ exportBtn.addEventListener("click", () => exportMenu.classList.toggle("hidden"))
 
 exportMenu.querySelectorAll("button").forEach(btn => {
   btn.addEventListener("click", () => {
-    const format = btn.dataset.format;
-    if (format === "json") exportJSON();
-    if (format === "csv") exportCSV();
+    if (btn.dataset.format === "json") exportJSON();
+    if (btn.dataset.format === "csv") exportCSV();
     exportMenu.classList.add("hidden");
   });
 });
 
 function exportJSON() {
-  const blob = new Blob([JSON.stringify(allLinks, null, 2)], { type: "application/json" });
-  download(blob, "palm-links.json");
+  download(new Blob([JSON.stringify(allLinks, null, 2)], { type: "application/json" }), "palm-links.json");
 }
 
 function exportCSV() {
-  const header = ["Title", "URL", "Summary", "Tags", "Saved At"].map(csvCell);
+  const header = ["Title","URL","Summary","Tags","Saved At"].map(csvCell);
   const rows = allLinks.map(l => [
-    csvCell(l.title),
-    csvCell(l.url),
-    csvCell(l.summary),
-    csvCell((l.tags || []).join(", ")),
-    csvCell(l.savedAt)
+    csvCell(l.title), csvCell(l.url), csvCell(l.summary),
+    csvCell((l.tags||[]).join(", ")), csvCell(l.savedAt)
   ]);
-  const csv = [header, ...rows].map(r => r.join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  download(blob, "palm-links.csv");
+  download(new Blob([[header,...rows].map(r=>r.join(",")).join("\n")], {type:"text/csv"}), "palm-links.csv");
 }
 
 function download(blob, filename) {
-  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
+  a.href = URL.createObjectURL(blob);
   a.download = filename;
   a.click();
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(a.href);
 }
 
-function csvCell(val) {
-  return `"${String(val || "").replace(/"/g, '""')}"`;
-}
+function csvCell(val) { return `"${String(val||"").replace(/"/g,'""')}"`; }
 
 // ── Helpers ──
 function getDomain(url) {
-  try { return new URL(url).hostname.replace("www.", ""); }
-  catch { return url; }
+  try { return new URL(url).hostname.replace("www.", ""); } catch { return url; }
 }
 
 function escapeHtml(str) {
-  return String(str || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
 function cleanText(str) {
-  return String(str || "")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/!\[.*?\]\(.*?\)/g, "")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/[#>~]/g, "")
-    .replace(/\s+/g, " ")
+  return String(str||"")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1")
+    .replace(/!\[.*?\]\(.*?\)/g,"")
+    .replace(/\*\*([^*]+)\*\*/g,"$1")
+    .replace(/\*([^*]+)\*/g,"$1")
+    .replace(/`([^`]+)`/g,"$1")
+    .replace(/[#>~]/g,"")
+    .replace(/\s+/g," ")
     .trim();
 }

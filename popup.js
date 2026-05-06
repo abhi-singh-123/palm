@@ -1,33 +1,33 @@
 // Elements
-const saveBtn = document.getElementById("saveBtn");
-const dashboardBtn = document.getElementById("dashboardBtn");
-const settingsBtn = document.getElementById("settingsBtn");
-const settingsPanel = document.getElementById("settingsPanel");
-const savingState = document.getElementById("savingState");
-const mainPanel = document.getElementById("mainPanel");
-const apiKeyInput = document.getElementById("apiKeyInput");
-const saveApiKey = document.getElementById("saveApiKey");
-const searchInput = document.getElementById("searchInput");
-const linksList = document.getElementById("linksList");
-const emptyState = document.getElementById("emptyState");
+const saveBtn        = document.getElementById("saveBtn");
+const dashboardBtn   = document.getElementById("dashboardBtn");
+const settingsBtn    = document.getElementById("settingsBtn");
+const settingsPanel  = document.getElementById("settingsPanel");
+const savingState    = document.getElementById("savingState");
+const mainPanel      = document.getElementById("mainPanel");
+const apiKeyInput    = document.getElementById("apiKeyInput");
+const saveApiKey     = document.getElementById("saveApiKey");
+const searchInput    = document.getElementById("searchInput");
+const linksList      = document.getElementById("linksList");
+const emptyState     = document.getElementById("emptyState");
+const headerCount    = document.getElementById("headerCount");
+const footerCount    = document.getElementById("footerCount");
+const footerDashBtn  = document.getElementById("footerDashBtn");
 
 // Init
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.sync.get("palmApiKey", ({ palmApiKey }) => {
-    if (!palmApiKey) {
-      settingsPanel.classList.remove("hidden");
-    }
-    if (palmApiKey) {
-      apiKeyInput.value = palmApiKey;
-    }
+    if (!palmApiKey) settingsPanel.classList.remove("hidden");
+    if (palmApiKey) apiKeyInput.value = palmApiKey;
   });
   chrome.storage.local.get("palmLinks", ({ palmLinks }) => {
-    updateBadge((palmLinks || []).length);
+    const count = (palmLinks || []).length;
+    updateBadge(count);
+    updateHeaderCount(count);
   });
   loadLinks();
   refreshUsageDisplay();
 });
-
 
 // Save current page
 saveBtn.addEventListener("click", () => {
@@ -44,47 +44,34 @@ saveBtn.addEventListener("click", () => {
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
-
-      // Grab page content directly via scripting — no content script needed
       chrome.scripting.executeScript(
         {
           target: { tabId: tab.id },
           func: () => {
             const noiseSelectors = "nav, header, footer, aside, .sidebar, .navigation, .menu, .ad, .advertisement, .related, .comments, .cookie, [class*='sidebar'], [class*='related'], [class*='recommend'], [id*='sidebar']";
-
-            // Clone to avoid mutating the live page DOM
             const clone = document.body.cloneNode(true);
             clone.querySelectorAll(noiseSelectors).forEach(el => el.remove());
-
             const article = clone.querySelector("article, [role='main'], main, .post-content, .article-body, .entry-content, .content-body, [class*='article'], [class*='post-body']");
-            const content = article ? article.innerText : clone.innerText || "";
             return {
               title: document.title || "",
               url: window.location.href,
-              content: content.slice(0, 8000)
+              content: (article ? article.innerText : clone.innerText || "").slice(0, 8000)
             };
           }
         },
         (results) => {
           if (chrome.runtime.lastError || !results?.[0]?.result) {
-            savingState.classList.add("hidden");
-            mainPanel.classList.remove("hidden");
-            saveBtn.disabled = false;
-            saveBtn.textContent = "Save This Page";
+            resetSaveBtn();
             showToast("Cannot save this page type.");
             return;
           }
 
           const { title, url, content } = results[0].result;
 
-          // Duplicate detection
           chrome.storage.local.get("palmLinks", ({ palmLinks }) => {
             const existing = (palmLinks || []).find(l => l.url === url);
             if (existing) {
-              savingState.classList.add("hidden");
-              mainPanel.classList.remove("hidden");
-              saveBtn.disabled = false;
-              saveBtn.textContent = "Save This Page";
+              resetSaveBtn();
               showToast("Already saved!");
               return;
             }
@@ -92,11 +79,7 @@ saveBtn.addEventListener("click", () => {
             chrome.runtime.sendMessage(
               { action: "summarize", data: { title, url, content, selectedText: "" } },
               (response) => {
-                savingState.classList.add("hidden");
-                mainPanel.classList.remove("hidden");
-                saveBtn.disabled = false;
-                saveBtn.textContent = "Save This Page";
-
+                resetSaveBtn();
                 if (response?.error) {
                   showToast("Error: " + response.error);
                   return;
@@ -104,8 +87,7 @@ saveBtn.addEventListener("click", () => {
 
                 const link = {
                   id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-                  title,
-                  url,
+                  title, url,
                   summary: response.summary,
                   tags: response.tags,
                   savedAt: new Date().toISOString()
@@ -114,6 +96,7 @@ saveBtn.addEventListener("click", () => {
                 const links = [link, ...(palmLinks || [])];
                 chrome.storage.local.set({ palmLinks: links }, () => {
                   updateBadge(links.length);
+                  updateHeaderCount(links.length);
                   incrementUsage();
                   showToast("Saved!");
                   loadLinks();
@@ -127,8 +110,19 @@ saveBtn.addEventListener("click", () => {
   });
 });
 
+function resetSaveBtn() {
+  savingState.classList.add("hidden");
+  mainPanel.classList.remove("hidden");
+  saveBtn.disabled = false;
+  saveBtn.textContent = "+ Save Page";
+}
+
 // Open full dashboard
 dashboardBtn.addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") });
+});
+
+footerDashBtn.addEventListener("click", () => {
   chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") });
 });
 
@@ -141,10 +135,7 @@ settingsBtn.addEventListener("click", () => {
 // Save API key
 saveApiKey.addEventListener("click", () => {
   const key = apiKeyInput.value.trim();
-  if (!key) {
-    showToast("Please enter a valid API key.");
-    return;
-  }
+  if (!key) { showToast("Please enter a valid API key."); return; }
   chrome.storage.sync.set({ palmApiKey: key }, () => {
     settingsPanel.classList.add("hidden");
     showToast("API key saved!");
@@ -162,7 +153,7 @@ function loadLinks(query = "") {
     const links = palmLinks || [];
     const filtered = query
       ? links.filter(l =>
-          l.title.toLowerCase().includes(query) ||
+          l.title?.toLowerCase().includes(query) ||
           l.summary?.toLowerCase().includes(query) ||
           l.tags?.some(t => t.toLowerCase().includes(query))
         )
@@ -170,15 +161,17 @@ function loadLinks(query = "") {
 
     linksList.innerHTML = "";
 
+    footerCount.textContent = filtered.length === links.length
+      ? `${links.length} link${links.length !== 1 ? "s" : ""}`
+      : `${filtered.length} of ${links.length}`;
+
     if (filtered.length === 0) {
       emptyState.classList.remove("hidden");
       return;
     }
 
     emptyState.classList.add("hidden");
-    filtered.forEach(link => {
-      linksList.appendChild(renderCard(link));
-    });
+    filtered.forEach(link => linksList.appendChild(renderCard(link)));
   });
 }
 
@@ -187,31 +180,33 @@ function renderCard(link) {
   const card = document.createElement("div");
   card.className = "link-card";
 
-  const date = new Date(link.savedAt).toLocaleDateString("en-US", {
-    month: "short", day: "numeric"
-  });
+  const date = new Date(link.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const domain = getDomain(link.url);
 
   card.innerHTML = `
-    <div class="link-title" title="${escapeHtml(cleanText(link.title))}">${escapeHtml(cleanText(link.title))}</div>
-    <div class="link-summary">${escapeHtml(cleanText(link.summary || ""))}</div>
-    <div class="link-footer">
-      <div class="link-tags">
-        ${(link.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span class="link-date">${date}</span>
-        <button class="link-delete" data-id="${link.id}" title="Delete">×</button>
+    <div class="card-favicon-wrap">
+      <img src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="" />
+    </div>
+    <div class="card-body">
+      <div class="link-title" title="${escapeHtml(cleanText(link.title))}">${escapeHtml(cleanText(link.title))}</div>
+      <div class="link-summary">${escapeHtml(cleanText(link.summary || "No summary yet"))}</div>
+      <div class="link-footer">
+        <div class="link-tags">
+          ${(link.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
+        </div>
+        <div class="link-actions">
+          <span class="link-date">${date}</span>
+          <button class="link-delete" data-id="${link.id}" title="Delete">×</button>
+        </div>
       </div>
     </div>
   `;
 
-  // Open link on click (not on delete button)
   card.addEventListener("click", (e) => {
     if (e.target.classList.contains("link-delete")) return;
     chrome.tabs.create({ url: link.url });
   });
 
-  // Delete
   card.querySelector(".link-delete").addEventListener("click", (e) => {
     e.stopPropagation();
     deleteLink(link.id);
@@ -225,6 +220,7 @@ function deleteLink(id) {
     const updated = (palmLinks || []).filter(l => l.id !== id);
     chrome.storage.local.set({ palmLinks: updated }, () => {
       updateBadge(updated.length);
+      updateHeaderCount(updated.length);
       loadLinks(searchInput.value.trim().toLowerCase());
       showToast("Deleted.");
     });
@@ -246,6 +242,15 @@ function updateBadge(count) {
   chrome.action.setBadgeBackgroundColor({ color: "#2d6a4f" });
 }
 
+function updateHeaderCount(count) {
+  if (headerCount) headerCount.textContent = `${count} LINK${count !== 1 ? "S" : ""} SAVED`;
+}
+
+function getDomain(url) {
+  try { return new URL(url).hostname.replace("www.", ""); }
+  catch { return url; }
+}
+
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -255,7 +260,7 @@ function escapeHtml(str) {
 }
 
 function getTodayKey() {
-  return new Date().toISOString().slice(0, 10); // "2026-05-01"
+  return new Date().toISOString().slice(0, 10);
 }
 
 function incrementUsage() {

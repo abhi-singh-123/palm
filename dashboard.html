@@ -10,17 +10,20 @@
 
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="sidebar-logo">🌴 PALM</div>
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🌴</div>
+      <div class="sidebar-logo-text">PALM</div>
+    </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-label">FILTER BY TAG</div>
+      <div class="sidebar-label">Filter by Tag</div>
       <div id="tagList">
         <button class="tag-filter active" data-tag="all">All Links <span id="totalCount" class="count">0</span></button>
       </div>
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-label">GROUP BY</div>
+      <div class="sidebar-label">Group by</div>
       <div class="group-options">
         <button class="group-btn active" data-group="none">None</button>
         <button class="group-btn" data-group="tag">Tag</button>
@@ -29,13 +32,13 @@
     </div>
 
     <div class="sidebar-bottom">
-      <button id="exportBtn" class="btn-secondary">Export</button>
+      <button id="exportBtn" class="btn-secondary">⬇ Export</button>
       <div id="exportMenu" class="export-menu hidden">
         <button data-format="json">Export as JSON</button>
         <button data-format="csv">Export as CSV</button>
       </div>
-      <button id="importBtn" class="btn-secondary">Import</button>
-      <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display:none" />
+      <button id="importBtn" class="btn-secondary">⬆ Import</button>
+      <input type="file" id="importFile" accept=".csv" style="display:none" />
     </div>
   </aside>
 
@@ -45,9 +48,7 @@
     <!-- Top bar -->
     <div class="topbar">
       <input type="text" id="searchInput" placeholder="Search links, summaries, tags..." />
-      <div class="topbar-right">
-        <span id="resultCount" class="result-count"></span>
-      </div>
+      <span id="resultCount" class="result-count"></span>
     </div>
 
     <!-- Links grid -->
@@ -61,13 +62,13 @@
       <div class="onboarding-steps">
         <div class="onboarding-step"><span class="step-num">1</span> Click the 🌴 PALM icon in your Chrome toolbar</div>
         <div class="onboarding-step"><span class="step-num">2</span> Add your free Gemini API key under ⚙️ Settings</div>
-        <div class="onboarding-step"><span class="step-num">3</span> Click <strong>Save This Page</strong> on any webpage</div>
+        <div class="onboarding-step"><span class="step-num">3</span> Click <strong>+ Save Page</strong> on any webpage</div>
       </div>
     </div>
 
   </main>
 
-  <!-- Expanded card modal -->
+  <!-- Modal -->
   <div id="modal" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-card">
