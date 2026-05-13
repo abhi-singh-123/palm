@@ -95,7 +95,7 @@ Appears in your popup and dashboard instantly
 4. Click **Create API key**
 5. Copy the key (starts with `AIza...`)
 
-> The Gemini API free tier allows 15 requests per minute and 1,500 requests per day — more than enough for personal use. No credit card required.
+> The Gemini API free tier is completely free for personal use — no credit card required. Just sign in with any Google account.
 
 ### Step 2 — Install PALM
 
@@ -176,10 +176,9 @@ You're ready to save links.
 palm/
 ├── manifest.json      — Extension config and permissions
 ├── background.js      — Service worker: context menu, Gemini API calls
-├── content.js         — Page content extraction for right-click saves
 ├── popup.html         — Toolbar popup UI
 ├── popup.css          — Popup styles
-├── popup.js           — Popup logic: save, search, settings
+├── popup.js           — Popup logic: save, search, settings, onboarding
 ├── dashboard.html     — Full-page dashboard
 ├── dashboard.css      — Dashboard styles
 ├── dashboard.js       — Dashboard logic: filter, group, edit, export

@@ -1,19 +1,8 @@
-// ── Config ──
-const FREE_TIER_URL = "https://palm-free-saves.kr0abhishek.workers.dev/summarize";
-
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "palm-save",
     title: "Save to PALM",
     contexts: ["page", "selection", "link"]
-  });
-
-  // Generate a unique user ID for free tier tracking
-  chrome.storage.local.get("palmUserId", ({ palmUserId }) => {
-    if (!palmUserId) {
-      const id = crypto.randomUUID();
-      chrome.storage.local.set({ palmUserId: id });
-    }
   });
 });
 
@@ -21,7 +10,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== "palm-save") return;
 
   const { palmApiKey } = await chrome.storage.sync.get("palmApiKey");
-  const { palmUserId } = await chrome.storage.local.get("palmUserId");
+
+  if (!palmApiKey) {
+    injectToast(tab.id, "PALM: Add your free Gemini API key in settings first.", "info");
+    return;
+  }
 
   // Grab page content
   let pageData;
@@ -63,12 +56,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
   injectToast(tab.id, "PALM: Saving...", "info");
 
-  const result = await summarize({ ...pageData, apiKey: palmApiKey, userId: palmUserId });
-
-  if (result.error === "free_limit_reached") {
-    injectToast(tab.id, "PALM: Add your free Gemini API key to keep saving.", "info");
-    return;
-  }
+  const result = await summarizeWithGemini({ ...pageData, apiKey: palmApiKey });
 
   if (result.error) {
     injectToast(tab.id, "PALM: Error — " + result.error, "error");
@@ -87,7 +75,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
   const links = [link, ...(palmLinks || [])];
   await chrome.storage.local.set({ palmLinks: links });
-  incrementUsage();
   injectToast(tab.id, "PALM: Saved!", "success");
 });
 
@@ -95,48 +82,15 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "summarize") {
     chrome.storage.sync.get("palmApiKey", ({ palmApiKey }) => {
-      chrome.storage.local.get("palmUserId", ({ palmUserId }) => {
-        summarize({ ...message.data, apiKey: palmApiKey, userId: palmUserId }).then(sendResponse);
-      });
+      if (!palmApiKey) {
+        sendResponse({ error: "no_api_key" });
+        return;
+      }
+      summarizeWithGemini({ ...message.data, apiKey: palmApiKey }).then(sendResponse);
     });
     return true;
   }
 });
-
-// ── Summarize — tries free tier first, falls back to user key ──
-async function summarize({ title, url, content, selectedText, apiKey, userId }) {
-  // If user has their own key, use it directly
-  if (apiKey) {
-    return summarizeWithGemini({ title, url, content, selectedText, apiKey });
-  }
-
-  // No key — try free tier
-  if (!userId) {
-    return { error: "No API key configured. Add your free Gemini key in settings." };
-  }
-
-  try {
-    const response = await fetch(FREE_TIER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, title, url, content, selectedText })
-    });
-
-    const data = await response.json();
-
-    if (data.error === "free_limit_reached") {
-      return { error: "free_limit_reached" };
-    }
-
-    if (data.error) {
-      return { error: data.error };
-    }
-
-    return { summary: data.summary, tags: data.tags };
-  } catch (err) {
-    return { error: "Could not connect. Add your Gemini API key to continue." };
-  }
-}
 
 // ── Toast ──
 function injectToast(tabId, msg, type) {
@@ -162,16 +116,6 @@ function injectToast(tabId, msg, type) {
       }
     },
     args: [msg, colors[type] || "#555"]
-  });
-}
-
-// ── Usage counter ──
-function incrementUsage() {
-  const today = new Date().toISOString().slice(0, 10);
-  chrome.storage.local.get("palmUsage", ({ palmUsage }) => {
-    const usage = palmUsage || {};
-    const count = usage.date === today ? (usage.count || 0) + 1 : 1;
-    chrome.storage.local.set({ palmUsage: { date: today, count } });
   });
 }
 

@@ -20,7 +20,11 @@ const footerDashBtn    = document.getElementById("footerDashBtn");
 // Init
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.sync.get("palmApiKey", ({ palmApiKey }) => {
-    if (palmApiKey) apiKeyInput.value = palmApiKey;
+    if (palmApiKey) {
+      apiKeyInput.value = palmApiKey;
+    } else {
+      showOnboarding();
+    }
   });
   chrome.storage.local.get("palmLinks", ({ palmLinks }) => {
     const count = (palmLinks || []).length;
@@ -74,7 +78,7 @@ saveBtn.addEventListener("click", () => {
           chrome.runtime.sendMessage(
             { action: "summarize", data: { title, url, content, selectedText: "" } },
             (response) => {
-              if (response?.error === "free_limit_reached") {
+              if (response?.error === "no_api_key" || response?.error === "free_limit_reached") {
                 resetSaveBtn();
                 showOnboarding();
                 return;
