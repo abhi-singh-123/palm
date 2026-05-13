@@ -2,7 +2,7 @@
 // Deploy to Cloudflare Workers
 // Requires: KV namespace bound as PALM_KV, secret GEMINI_API_KEY
 
-const FREE_LIMIT = 10;
+const FREE_LIMIT = 5;
 
 const PALM_TAGS = [
   "AI", "Productivity", "Technology", "Programming", "Career",
