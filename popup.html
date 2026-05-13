@@ -24,23 +24,29 @@
     </div>
   </div>
 
+  <!-- Onboarding panel (shown after 10 free saves are used) -->
+  <div id="onboardingPanel" class="onboarding-panel hidden">
+    <div class="onboarding-icon">🌴</div>
+    <div class="onboarding-title">You've used your 10 free saves!</div>
+    <div class="onboarding-sub">Add your free Gemini API key to keep saving — no credit card, no billing, completely free.</div>
+    <div class="onboarding-steps">
+      <div class="ob-step"><span class="ob-num">1</span><span>Go to <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a></span></div>
+      <div class="ob-step"><span class="ob-num">2</span><span>Sign in with any Google account</span></div>
+      <div class="ob-step"><span class="ob-num">3</span><span>Click <strong>Get API Key</strong> → Create key</span></div>
+      <div class="ob-step"><span class="ob-num">4</span><span>Paste it below and save</span></div>
+    </div>
+    <label class="ob-label">Your Gemini API Key</label>
+    <input type="password" id="obApiKeyInput" placeholder="AIza..." />
+    <button id="obSaveApiKey" class="btn-save-key">Save Key &amp; Continue Saving</button>
+  </div>
+
   <!-- Settings Panel -->
   <div id="settingsPanel" class="panel hidden">
     <h3>Settings</h3>
     <label>Gemini API Key</label>
     <input type="password" id="apiKeyInput" placeholder="AIza..." />
     <button id="saveApiKey" class="btn-save-key">Save Key</button>
-    <p class="hint">Get your free key at aistudio.google.com → Get API Key</p>
-    <div class="usage-box">
-      <div class="usage-row">
-        <span class="usage-label">Today's saves</span>
-        <span id="usageCount" class="usage-count">0 / 500</span>
-      </div>
-      <div class="usage-bar-track">
-        <div id="usageBar" class="usage-bar" style="width:0%"></div>
-      </div>
-      <p class="hint">Free tier: 500 saves/day · Resets midnight PT</p>
-    </div>
+    <p class="hint">Get your free key at <a href="https://aistudio.google.com" target="_blank" class="hint-link">aistudio.google.com</a> → Get API Key</p>
   </div>
 
   <!-- Saving state -->

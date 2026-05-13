@@ -154,6 +154,11 @@ body {
   line-height: 1.5;
 }
 
+.hint-link {
+  color: #2d6a4f;
+  text-decoration: underline;
+}
+
 /* Usage */
 .usage-box {
   margin-top: 14px;
@@ -361,6 +366,90 @@ body {
 }
 
 .footer-dash-btn:hover { text-decoration: underline; }
+
+/* ── Onboarding panel (after free tier exhausted) ── */
+.onboarding-panel {
+  padding: 20px 18px 16px;
+  background: #f0fdf4;
+  border-bottom: 1px solid #d1fae5;
+}
+
+.onboarding-icon {
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.onboarding-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1b4332;
+  margin-bottom: 5px;
+}
+
+.onboarding-sub {
+  font-size: 12px;
+  color: #555;
+  line-height: 1.55;
+  margin-bottom: 13px;
+}
+
+.onboarding-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.ob-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.ob-step a {
+  color: #2d6a4f;
+  text-decoration: underline;
+}
+
+.ob-num {
+  width: 18px;
+  height: 18px;
+  background: #2d6a4f;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ob-label {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.onboarding-panel input[type="password"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid #b7e4c7;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 8px;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.onboarding-panel input:focus { border-color: #2d6a4f; }
 
 /* ── Empty state ── */
 .empty-state {

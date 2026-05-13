@@ -1,23 +1,25 @@
 // Elements
-const saveBtn        = document.getElementById("saveBtn");
-const dashboardBtn   = document.getElementById("dashboardBtn");
-const settingsBtn    = document.getElementById("settingsBtn");
-const settingsPanel  = document.getElementById("settingsPanel");
-const savingState    = document.getElementById("savingState");
-const mainPanel      = document.getElementById("mainPanel");
-const apiKeyInput    = document.getElementById("apiKeyInput");
-const saveApiKey     = document.getElementById("saveApiKey");
-const searchInput    = document.getElementById("searchInput");
-const linksList      = document.getElementById("linksList");
-const emptyState     = document.getElementById("emptyState");
-const headerCount    = document.getElementById("headerCount");
-const footerCount    = document.getElementById("footerCount");
-const footerDashBtn  = document.getElementById("footerDashBtn");
+const saveBtn          = document.getElementById("saveBtn");
+const dashboardBtn     = document.getElementById("dashboardBtn");
+const settingsBtn      = document.getElementById("settingsBtn");
+const settingsPanel    = document.getElementById("settingsPanel");
+const onboardingPanel  = document.getElementById("onboardingPanel");
+const savingState      = document.getElementById("savingState");
+const mainPanel        = document.getElementById("mainPanel");
+const apiKeyInput      = document.getElementById("apiKeyInput");
+const saveApiKey       = document.getElementById("saveApiKey");
+const obApiKeyInput    = document.getElementById("obApiKeyInput");
+const obSaveApiKey     = document.getElementById("obSaveApiKey");
+const searchInput      = document.getElementById("searchInput");
+const linksList        = document.getElementById("linksList");
+const emptyState       = document.getElementById("emptyState");
+const headerCount      = document.getElementById("headerCount");
+const footerCount      = document.getElementById("footerCount");
+const footerDashBtn    = document.getElementById("footerDashBtn");
 
 // Init
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.sync.get("palmApiKey", ({ palmApiKey }) => {
-    if (!palmApiKey) settingsPanel.classList.remove("hidden");
     if (palmApiKey) apiKeyInput.value = palmApiKey;
   });
   chrome.storage.local.get("palmLinks", ({ palmLinks }) => {
@@ -26,87 +28,85 @@ document.addEventListener("DOMContentLoaded", () => {
     updateHeaderCount(count);
   });
   loadLinks();
-  refreshUsageDisplay();
 });
 
 // Save current page
 saveBtn.addEventListener("click", () => {
-  chrome.storage.sync.get("palmApiKey", ({ palmApiKey }) => {
-    if (!palmApiKey) {
-      settingsPanel.classList.remove("hidden");
-      showToast("Add your API key first.");
-      return;
-    }
-    saveBtn.disabled = true;
-    saveBtn.textContent = "Saving...";
-    mainPanel.classList.add("hidden");
-    savingState.classList.remove("hidden");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving...";
+  mainPanel.classList.add("hidden");
+  savingState.classList.remove("hidden");
 
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tab = tabs[0];
-      chrome.scripting.executeScript(
-        {
-          target: { tabId: tab.id },
-          func: () => {
-            const noiseSelectors = "nav, header, footer, aside, .sidebar, .navigation, .menu, .ad, .advertisement, .related, .comments, .cookie, [class*='sidebar'], [class*='related'], [class*='recommend'], [id*='sidebar']";
-            const clone = document.body.cloneNode(true);
-            clone.querySelectorAll(noiseSelectors).forEach(el => el.remove());
-            const article = clone.querySelector("article, [role='main'], main, .post-content, .article-body, .entry-content, .content-body, [class*='article'], [class*='post-body']");
-            return {
-              title: document.title || "",
-              url: window.location.href,
-              content: (article ? article.innerText : clone.innerText || "").slice(0, 8000)
-            };
-          }
-        },
-        (results) => {
-          if (chrome.runtime.lastError || !results?.[0]?.result) {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    chrome.scripting.executeScript(
+      {
+        target: { tabId: tab.id },
+        func: () => {
+          const noiseSelectors = "nav, header, footer, aside, .sidebar, .navigation, .menu, .ad, .advertisement, .related, .comments, .cookie, [class*='sidebar'], [class*='related'], [class*='recommend'], [id*='sidebar']";
+          const clone = document.body.cloneNode(true);
+          clone.querySelectorAll(noiseSelectors).forEach(el => el.remove());
+          const article = clone.querySelector("article, [role='main'], main, .post-content, .article-body, .entry-content, .content-body, [class*='article'], [class*='post-body']");
+          return {
+            title: document.title || "",
+            url: window.location.href,
+            content: (article ? article.innerText : clone.innerText || "").slice(0, 8000)
+          };
+        }
+      },
+      (results) => {
+        if (chrome.runtime.lastError || !results?.[0]?.result) {
+          resetSaveBtn();
+          showToast("Cannot save this page type.");
+          return;
+        }
+
+        const { title, url, content } = results[0].result;
+
+        chrome.storage.local.get("palmLinks", ({ palmLinks }) => {
+          const existing = (palmLinks || []).find(l => l.url === url);
+          if (existing) {
             resetSaveBtn();
-            showToast("Cannot save this page type.");
+            showToast("Already saved!");
             return;
           }
 
-          const { title, url, content } = results[0].result;
-
-          chrome.storage.local.get("palmLinks", ({ palmLinks }) => {
-            const existing = (palmLinks || []).find(l => l.url === url);
-            if (existing) {
-              resetSaveBtn();
-              showToast("Already saved!");
-              return;
-            }
-
-            chrome.runtime.sendMessage(
-              { action: "summarize", data: { title, url, content, selectedText: "" } },
-              (response) => {
+          chrome.runtime.sendMessage(
+            { action: "summarize", data: { title, url, content, selectedText: "" } },
+            (response) => {
+              if (response?.error === "free_limit_reached") {
                 resetSaveBtn();
-                if (response?.error) {
-                  showToast("Error: " + response.error);
-                  return;
-                }
-
-                const link = {
-                  id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-                  title, url,
-                  summary: response.summary,
-                  tags: response.tags,
-                  savedAt: new Date().toISOString()
-                };
-
-                const links = [link, ...(palmLinks || [])];
-                chrome.storage.local.set({ palmLinks: links }, () => {
-                  updateBadge(links.length);
-                  updateHeaderCount(links.length);
-                  incrementUsage();
-                  showToast("Saved!");
-                  loadLinks();
-                });
+                showOnboarding();
+                return;
               }
-            );
-          });
-        }
-      );
-    });
+
+              if (response?.error) {
+                resetSaveBtn();
+                showToast("Error: " + response.error);
+                return;
+              }
+
+              const link = {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+                title, url,
+                summary: response.summary,
+                tags: response.tags,
+                savedAt: new Date().toISOString()
+              };
+
+              const links = [link, ...(palmLinks || [])];
+              chrome.storage.local.set({ palmLinks: links }, () => {
+                updateBadge(links.length);
+                updateHeaderCount(links.length);
+                resetSaveBtn();
+                showToast("Saved! ✓");
+                loadLinks();
+              });
+            }
+          );
+        });
+      }
+    );
   });
 });
 
@@ -128,11 +128,11 @@ footerDashBtn.addEventListener("click", () => {
 
 // Toggle settings
 settingsBtn.addEventListener("click", () => {
+  onboardingPanel.classList.add("hidden");
   settingsPanel.classList.toggle("hidden");
-  refreshUsageDisplay();
 });
 
-// Save API key
+// Save API key (settings panel)
 saveApiKey.addEventListener("click", () => {
   const key = apiKeyInput.value.trim();
   if (!key) { showToast("Please enter a valid API key."); return; }
@@ -141,6 +141,24 @@ saveApiKey.addEventListener("click", () => {
     showToast("API key saved!");
   });
 });
+
+// Save API key (onboarding panel)
+obSaveApiKey.addEventListener("click", () => {
+  const key = obApiKeyInput.value.trim();
+  if (!key) { showToast("Please paste your API key."); return; }
+  chrome.storage.sync.set({ palmApiKey: key }, () => {
+    onboardingPanel.classList.add("hidden");
+    apiKeyInput.value = key;
+    showToast("API key saved! You can keep saving now.");
+  });
+});
+
+function showOnboarding() {
+  settingsPanel.classList.add("hidden");
+  mainPanel.classList.remove("hidden");
+  onboardingPanel.classList.remove("hidden");
+  obApiKeyInput.value = "";
+}
 
 // Search
 searchInput.addEventListener("input", () => {
@@ -257,40 +275,6 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-}
-
-function getTodayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function incrementUsage() {
-  const today = getTodayKey();
-  chrome.storage.local.get("palmUsage", ({ palmUsage }) => {
-    const usage = palmUsage || {};
-    const count = usage.date === today ? (usage.count || 0) + 1 : 1;
-    chrome.storage.local.set({ palmUsage: { date: today, count } }, refreshUsageDisplay);
-  });
-}
-
-function refreshUsageDisplay() {
-  const today = getTodayKey();
-  chrome.storage.local.get("palmUsage", ({ palmUsage }) => {
-    const count = (palmUsage?.date === today) ? palmUsage.count : 0;
-    const limit = 500;
-    const pct = Math.min((count / limit) * 100, 100);
-
-    const countEl = document.getElementById("usageCount");
-    const barEl = document.getElementById("usageBar");
-    if (!countEl || !barEl) return;
-
-    countEl.textContent = `${count} / ${limit}`;
-    barEl.style.width = `${pct}%`;
-
-    const warn = count >= 400;
-    const danger = count >= 480;
-    countEl.className = "usage-count" + (danger ? " danger" : warn ? " warning" : "");
-    barEl.className = "usage-bar" + (danger ? " danger" : warn ? " warning" : "");
-  });
 }
 
 function cleanText(str) {
