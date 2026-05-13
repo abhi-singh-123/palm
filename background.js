@@ -1,5 +1,5 @@
 // ── Config ──
-const FREE_TIER_URL = "https://palm-free-saves.REPLACE_WITH_YOUR_SUBDOMAIN.workers.dev/summarize";
+const FREE_TIER_URL = "https://palm-free-saves.kr0abhishek.workers.dev/summarize";
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
