@@ -2,6 +2,8 @@
 
 > Save any link. AI summarizes it instantly. Everything stays private on your device.
 
+![PALM Demo](Palm.gif)
+
 PALM is a Chrome extension that turns your scattered saved links into an organized, searchable, AI-powered personal library. **No account. No sign-up. No data ever leaves your device** — except to the Gemini API for summarization, using your own API key.
 
 ---
