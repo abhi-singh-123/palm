@@ -200,6 +200,9 @@ palm/
 
 ## Roadmap
 
+- [ ] **Smart cleanup** — surface links you saved but never opened, grouped by age, with bulk delete suggestions
+- [ ] **Broken link checker** — automatically detect and badge dead links in your library
+- [ ] **One-click archive** — save a permanent Wayback Machine snapshot when you bookmark a link
 - [ ] Weekly digest — Sunday summary of your best saved links
 - [ ] Related links — surface saved links while browsing similar content
 - [ ] Firefox support
