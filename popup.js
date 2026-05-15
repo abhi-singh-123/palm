@@ -226,6 +226,7 @@ function renderCard(link) {
 
   card.addEventListener("click", (e) => {
     if (e.target.classList.contains("link-delete")) return;
+    trackOpen(link.id);
     chrome.tabs.create({ url: link.url });
   });
 
@@ -279,6 +280,26 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function trackOpen(linkId) {
+  const today = new Date().toISOString().slice(0, 10);
+  chrome.storage.local.get("palmLinks", ({ palmLinks }) => {
+    const links = palmLinks || [];
+    const idx = links.findIndex(l => l.id === linkId);
+    if (idx === -1) return;
+    const link = links[idx];
+    const history = link.openHistory || [];
+    history.push(today);
+    if (history.length > 365) history.shift();
+    links[idx] = {
+      ...link,
+      openCount: (link.openCount || 0) + 1,
+      lastOpenedAt: new Date().toISOString(),
+      openHistory: history
+    };
+    chrome.storage.local.set({ palmLinks: links });
+  });
 }
 
 function cleanText(str) {

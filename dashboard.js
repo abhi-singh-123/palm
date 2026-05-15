@@ -325,7 +325,10 @@ function openModal(link) {
     </div>
   `;
 
-  document.getElementById("modalOpen").addEventListener("click", () => chrome.tabs.create({ url: link.url }));
+  document.getElementById("modalOpen").addEventListener("click", () => {
+    trackOpen(link.id);
+    chrome.tabs.create({ url: link.url });
+  });
   document.getElementById("modalDelete").addEventListener("click", () => {
     deleteLink(link.id);
     modal.classList.add("hidden");
@@ -443,6 +446,25 @@ function updateLinkTags(link, newTags) {
     render();
     openModal(link);
   });
+}
+
+// ── Track opens ──
+function trackOpen(linkId) {
+  const today = new Date().toISOString().slice(0, 10);
+  const idx = allLinks.findIndex(l => l.id === linkId);
+  if (idx === -1) return;
+  const link = allLinks[idx];
+  const history = link.openHistory || [];
+  history.push(today);
+  // Keep last 365 entries max
+  if (history.length > 365) history.shift();
+  allLinks[idx] = {
+    ...link,
+    openCount: (link.openCount || 0) + 1,
+    lastOpenedAt: new Date().toISOString(),
+    openHistory: history
+  };
+  chrome.storage.local.set({ palmLinks: allLinks });
 }
 
 // ── Delete ──
